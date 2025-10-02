@@ -19,7 +19,7 @@ public class Constants {
     public static final double PositionConvertionFactor = 1/GearRatio*WheelCirc;
     public static final double VelocityConvertionFactor = PositionConvertionFactor/60/60;
     public static final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Centimeters.of(65));
-    public static final Pose2d InitialPose = new Pose2d(3,7, Rotation2d.kZero);
+    public static final Pose2d InitialPose = new Pose2d(7.6,7, Rotation2d.kZero);
 
     public static final ClosedLoopConfig LeftPIDConfig = new ClosedLoopConfig()
         .pidf(0.255, 0, 0.05, 1.0 / 442.5) //the ff is 1/Motor kV which units rpm/V

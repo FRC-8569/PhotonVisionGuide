@@ -41,6 +41,8 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -61,6 +63,7 @@ public class Drivetrain extends SubsystemBase{
     public StructPublisher<ChassisSpeeds> TargetSpeeds, CurrentSpeeds;
     public StructArrayPublisher<SwerveModuleState> WheelState;
     public StructPublisher<Pose2d> RobotPose;
+    public Field2d FieldEasy;
 
     public SparkMaxSim LeftMotorSim, RightMotorSim;
     public SparkRelativeEncoderSim LeftEncdoerSim, RightEncoderSim;
@@ -85,6 +88,8 @@ public class Drivetrain extends SubsystemBase{
         CurrentSpeeds = NetworkTableInstance.getDefault().getStructTopic("Drivetrain/CurrentSpeeds", ChassisSpeeds.struct).publish();
         WheelState = NetworkTableInstance.getDefault().getStructArrayTopic("Drivetrain/WheelState", SwerveModuleState.struct).publish();
         RobotPose = NetworkTableInstance.getDefault().getStructTopic("Drivetrain/RobotPose", Pose2d.struct).publish();
+        FieldEasy = new Field2d();
+        SmartDashboard.putData(FieldEasy);
 
         LeftConfig = new SparkMaxConfig();
         LeftBackConfig = new SparkMaxConfig();
@@ -188,6 +193,7 @@ public class Drivetrain extends SubsystemBase{
         RobotPose.accept(PoseEstmator.getEstimatedPosition());
         Pose2d pose = vision.getPose();
         if(pose != null && RobotBase.isReal()) PoseEstmator.addVisionMeasurement(pose, RobotController.getFPGATime());
+        FieldEasy.setRobotPose(PoseEstmator.getEstimatedPosition());
     }
 
     private void autoInit(){

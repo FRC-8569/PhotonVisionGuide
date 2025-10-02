@@ -7,14 +7,17 @@ package frc.robot;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Auto.Auto;
 import frc.robot.Drivetrain.Drivetrain;
+import frc.robot.Shooter.Shooter;
 import frc.utils.FieldPieces;
 import frc.utils.FieldPieces.ReefSide;
 
 public class RobotContainer {
   public Drivetrain drivetrain = Drivetrain.getInstance();
+  public Shooter shooter = new Shooter();
+  public Auto auto = new Auto(drivetrain, shooter);
   public XboxController controller = new XboxController(0);
   public double SpeedMode = 1;
 
@@ -39,6 +42,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return auto.getAuto(true);
   }
 }
