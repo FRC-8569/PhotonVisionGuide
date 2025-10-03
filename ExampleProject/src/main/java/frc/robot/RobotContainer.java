@@ -7,16 +7,13 @@ package frc.robot;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Auto.Auto;
 import frc.robot.Drivetrain.Drivetrain;
 import frc.robot.Shooter.Shooter;
-import frc.utils.FieldPieces;
-import frc.utils.FieldPieces.ReefSide;
 
 public class RobotContainer {
   public Drivetrain drivetrain = Drivetrain.getInstance();
-  public Shooter shooter = new Shooter();
+  public Shooter shooter =  Shooter.getInstance();
   public Auto auto = new Auto(drivetrain, shooter);
   public XboxController controller = new XboxController(0);
   public double SpeedMode = 1;
@@ -37,8 +34,6 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    new Trigger(() -> controller.getRawButton(1))
-      .onTrue(drivetrain.drive(FieldPieces.CoralStation, ReefSide.NULL));
   }
 
   public Command getAutonomousCommand() {

@@ -30,6 +30,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -63,12 +64,15 @@ public class Drivetrain extends SubsystemBase{
     public StructPublisher<ChassisSpeeds> TargetSpeeds, CurrentSpeeds;
     public StructArrayPublisher<SwerveModuleState> WheelState;
     public StructPublisher<Pose2d> RobotPose;
+    public StringPublisher NowDoing;
     public Field2d FieldEasy;
 
     public SparkMaxSim LeftMotorSim, RightMotorSim;
     public SparkRelativeEncoderSim LeftEncdoerSim, RightEncoderSim;
     public DifferentialDrivetrainSim SimSystem;
     public Notifier SimNotifier;
+
+    public static Drivetrain drivetrain;
 
     private Drivetrain(){
         LeftMotor = new SparkMax(Constants.Motors[0], MotorType.kBrushed);
@@ -88,8 +92,10 @@ public class Drivetrain extends SubsystemBase{
         CurrentSpeeds = NetworkTableInstance.getDefault().getStructTopic("Drivetrain/CurrentSpeeds", ChassisSpeeds.struct).publish();
         WheelState = NetworkTableInstance.getDefault().getStructArrayTopic("Drivetrain/WheelState", SwerveModuleState.struct).publish();
         RobotPose = NetworkTableInstance.getDefault().getStructTopic("Drivetrain/RobotPose", Pose2d.struct).publish();
+        NowDoing = NetworkTableInstance.getDefault().getTable("RobotDoing").getStringTopic("Drivetrain").publish();
         FieldEasy = new Field2d();
         SmartDashboard.putData(FieldEasy);
+        NowDoing.accept("null");
 
         LeftConfig = new SparkMaxConfig();
         LeftBackConfig = new SparkMaxConfig();
@@ -178,6 +184,7 @@ public class Drivetrain extends SubsystemBase{
     }
 
     public Command drive(FieldPieces pieces, ReefSide side){
+        NowDoing.accept("開到%s%s".formatted(pieces.toString(), side != ReefSide.NULL ? side.toString(): ""));
         return drive(pieces.getPose(PoseEstmator.getEstimatedPosition()).plus(side.getOffset()));
     }
 
@@ -225,6 +232,8 @@ public class Drivetrain extends SubsystemBase{
         SimNotifier = new Notifier(this::simUpdate);
         SimNotifier.setName("SimNotifier");
         SimNotifier.startPeriodic(0.02);
+        LeftMotorSim.useDriverStationEnable();
+        RightMotorSim.useDriverStationEnable();
     }
     private void simUpdate(){
         SimSystem.setInputs(LeftMotor.getAppliedOutput()*12, RightMotor.getAppliedOutput()*12);
@@ -246,6 +255,7 @@ public class Drivetrain extends SubsystemBase{
     }
 
     public static Drivetrain getInstance(){
-        return new Drivetrain();
+        if(drivetrain == null) drivetrain = new Drivetrain();
+        return drivetrain;
     }
 }
