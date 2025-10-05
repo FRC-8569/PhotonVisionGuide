@@ -2,6 +2,8 @@ package frc.robot.Auto;
 
 import static edu.wpi.first.units.Units.Seconds;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -17,9 +19,9 @@ public class Auto{
     public Drivetrain drivetrain;
     public Shooter shooter;
 
-    public Auto(Drivetrain drivetrain, Shooter shooter){
-        this.drivetrain = drivetrain;
-        this.shooter = shooter;
+    public Auto(){
+        this.drivetrain = Drivetrain.getInstance();
+        this.shooter = Shooter.getInstance();
     }
 
     private Command waitCoral(){
@@ -42,4 +44,7 @@ public class Auto{
         ).withTimeout(Seconds.of(15));
     }
 
+    public Command testAuto(boolean b){
+        return drivetrain.drive(FieldPieces.CoralStation,ReefSide.NULL);        
+    }
 }

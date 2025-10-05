@@ -29,6 +29,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
@@ -65,6 +66,7 @@ public class Drivetrain extends SubsystemBase{
     public StructArrayPublisher<SwerveModuleState> WheelState;
     public StructPublisher<Pose2d> RobotPose;
     public StringPublisher NowDoing;
+    public DoublePublisher Gyroheading, GyroTarget;
     public Field2d FieldEasy;
 
     public SparkMaxSim LeftMotorSim, RightMotorSim;
@@ -96,6 +98,15 @@ public class Drivetrain extends SubsystemBase{
         FieldEasy = new Field2d();
         SmartDashboard.putData(FieldEasy);
         NowDoing.accept("null");
+        SmartDashboard.putData(gyro);
+
+        Gyroheading = NetworkTableInstance.getDefault().getDoubleTopic("Drivetrain/debug/GyroHeading/Value").publish();
+        GyroTarget = NetworkTableInstance.getDefault().getDoubleTopic("Drivetrain/debug/GyroTarget/Value").publish();
+        NetworkTableInstance.getDefault().getStringTopic("Drivetrain/debug/GyroHeading/.type").publish().set("Gyro");
+        NetworkTableInstance.getDefault().getStringTopic("Drivetrain/debug/GyroTarget/.type").publish().set("Gyro");
+        Gyroheading.accept(-1);
+        GyroTarget.accept(-1);
+
 
         LeftConfig = new SparkMaxConfig();
         LeftBackConfig = new SparkMaxConfig();
@@ -170,13 +181,29 @@ public class Drivetrain extends SubsystemBase{
     public Command drive(Pose2d pose){
         try{
             return new PathfindingCommand(
-            pose, 
+            pose,
             Constants.constraints, 
             () -> this.PoseEstmator.getEstimatedPosition(), 
             () -> Constants.kinematics.toChassisSpeeds(getVelocity()), 
             (speeds ,ff) -> drive(speeds),new PPLTVController(VecBuilder.fill(0.0625, 0.0625, .0625), VecBuilder.fill(.5, 1), 0.02, Constants.MaxVelocity), 
             RobotConfig.fromGUISettings(), 
-            this);
+            this) ;
+        }catch(Exception e){
+            DriverStation.reportWarning("The path cannot generated with ", e.getStackTrace());
+            return Commands.none();
+        }
+    }
+
+    public Command spin(Rotation2d target){
+        try{
+            return new PathfindingCommand(
+            new Pose2d(PoseEstmator.getEstimatedPosition().getX(), PoseEstmator.getEstimatedPosition().getY(), target), 
+            Constants.constraints, 
+            () -> this.PoseEstmator.getEstimatedPosition(), 
+            () -> Constants.kinematics.toChassisSpeeds(getVelocity()), 
+            (speeds ,ff) -> drive(speeds),new PPLTVController(VecBuilder.fill(0.0625, 0.0625, .0625), VecBuilder.fill(.5, 1), 0.02, Constants.MaxVelocity), 
+            RobotConfig.fromGUISettings(), 
+            this).andThen();
         }catch(Exception e){
             DriverStation.reportWarning("The path cannot generated with ", e.getStackTrace());
             return Commands.none();
@@ -184,8 +211,8 @@ public class Drivetrain extends SubsystemBase{
     }
 
     public Command drive(FieldPieces pieces, ReefSide side){
-        NowDoing.accept("開到%s%s".formatted(pieces.toString(), side != ReefSide.NULL ? side.toString(): ""));
-        return drive(pieces.getPose(PoseEstmator.getEstimatedPosition()).plus(side.getOffset()));
+        NowDoing.accept("開到%s%s".formatted(pieces.toString(), side.toString()));
+        return drive(pieces.getPose(PoseEstmator.getEstimatedPosition()).transformBy(side.getOffset()));
     }
 
     public void resetPose(Pose2d pose){
@@ -201,6 +228,8 @@ public class Drivetrain extends SubsystemBase{
         Pose2d pose = vision.getPose();
         if(pose != null && RobotBase.isReal()) PoseEstmator.addVisionMeasurement(pose, RobotController.getFPGATime());
         FieldEasy.setRobotPose(PoseEstmator.getEstimatedPosition());
+        Gyroheading.accept(gyro.getRotation2d().getDegrees());
+        
     }
 
     private void autoInit(){
